@@ -41,7 +41,7 @@ def pd_to_sqlDB(input_df: pd.DataFrame,
                                                                cols_string,
                                                                val_wildcard_string)
     cur.executemany(sql_string, rows_to_upload)
-    logging.info(f'{len(rows_to_upload)} uploaded to {table_name}')
+    logging.info(f'{len(rows_to_upload)} rows uploaded to {table_name}')
   
     # Step 6: Commit the changes and close the connection
     con.commit()
