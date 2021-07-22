@@ -31,15 +31,13 @@ def pd_to_sqlDB(input_df: pd.DataFrame,
     logging.info(f'SQL DB {db_name} created')
 
     # Step 4: Create Table
-    sql_string = """CREATE TABLE {} ({});""".format(table_name, cols_string)
+    sql_string = f"""CREATE TABLE {table_name} ({cols_string});"""
     cur.execute(sql_string)
     logging.info(f'SQL Table {table_name} created with {len(cols)} columns')
 
     # Step 5: Upload the dataframe
     rows_to_upload = input_df.to_dict(orient='split')['data']
-    sql_string = """INSERT INTO {} ({}) VALUES ({});""".format(table_name, 
-                                                               cols_string,
-                                                               val_wildcard_string)
+    sql_string = f"""INSERT INTO {table_name} ({cols_string}) VALUES ({val_wildcard_string});"""
     cur.executemany(sql_string, rows_to_upload)
     logging.info(f'{len(rows_to_upload)} rows uploaded to {table_name}')
   
