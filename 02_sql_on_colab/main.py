@@ -86,9 +86,9 @@ if __name__ == '__main__':
     
     # Step 3: Write the SQL query in a string variable
     sql_query_string = """
-        SELECT country, SUM(total_vaccinations) as total_vaccinated
+        SELECT country, SUM(daily_vaccinations) as total_vaccinated
         FROM country_vaccinations 
-        WHERE total_vaccinations IS NOT NULL 
+        WHERE daily_vaccinations IS NOT NULL 
         GROUP BY country
         ORDER BY total_vaccinated DESC
     """
