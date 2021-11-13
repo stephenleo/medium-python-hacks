@@ -47,7 +47,6 @@ app.layout = html.Table(
 )
 def tweet_feed(tweet_id_list):
     tweet_ids = [tweet.strip() for tweet in tweet_id_list.split(",")]
-    print(tweet_ids)
     return ([html.Div(id=f"container_{tweet_id}") for tweet_id in tweet_ids], tweet_ids)
 
 app.clientside_callback(
