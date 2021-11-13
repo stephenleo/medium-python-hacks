@@ -45,10 +45,10 @@ app.layout = html.Table(
     Output("tweet_ids", "data"),
     Input("tweet_id_list", "value"),
 )
-def tweet_feed(tweet_ids):
-    tweet_ids = [tweet.strip() for tweet in tweet_ids.split(",")]
-    print(tweet_ids)
-    return ([html.Div(id=f"container_{tweet_id}") for tweet_id in tweet_ids], tweet_ids)
+def tweet_feed(tweet_id_list):
+    tweet_id_list = [tweet.strip() for tweet in tweet_id_list.split(",")]
+    print(tweet_id_list)
+    return ([html.Div(id=f"container_{tweet_id}") for tweet_id in tweet_id_list], tweet_id_list)
 
 app.clientside_callback(
     """
