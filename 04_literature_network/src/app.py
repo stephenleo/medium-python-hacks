@@ -3,13 +3,13 @@ from streamlit.components.v1 import html
 import streamlit as st
 import helpers
 st.set_page_config(layout='wide',
-                   page_title='S-TRI-P: Semantic Similarity of Scientific Papers!',
+                   page_title='STriP: Semantic Similarity of Scientific Papers!',
                    page_icon='💡'
                    )
 
 
 def main():
-    st.title('S-TRI-P (S3P): Semantic Similarity of Scientific Papers!')
+    st.title('STriP (S3P): Semantic Similarity of Scientific Papers!')
 
     st.header('📂 Load Data')
     uploaded_file = st.file_uploader("Choose a CSV file",
@@ -73,9 +73,9 @@ def main():
                     'No visualization available. Try a lower Minimum topic size!')
 
         ##########
-        # S-TRI-P Network
+        # STriP Network
         ##########
-        st.header('🚀 S-TRI-P Network')
+        st.header('🚀 STriP Network')
 
         with st.spinner('Embedding generation'):
             data = helpers.embeddings(data)
@@ -153,7 +153,7 @@ def main():
 
     st.markdown(
         """
-        💡🔥🚀 S-TRI-P v1.0 🚀🔥💡
+        💡🔥🚀 STriP v1.0 🚀🔥💡
 
         👨‍🔬 Author: Marie Stephen Leo
 
