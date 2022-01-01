@@ -24,9 +24,14 @@ def main():
         df = helpers.load_data('data.csv')
 
     data = df.copy()
+    selected_cols = st.multiselect('Select columns to analyse', options=data.columns,
+                                   default=[col for col in data.columns if col.lower() in ['title', 'abstract']])
+    data = data[selected_cols]
+    data = data.dropna()
+    data = data.reset_index(drop=True)
     st.write(f'Number of papers: {len(data)}')
     st.write('First 5 rows of loaded data:')
-    st.write(data[['Title', 'Abstract']].head())
+    st.write(data[selected_cols].head())
 
     if data is not None:
         ##########
@@ -37,17 +42,17 @@ def main():
         cols = st.columns(3)
         with cols[0]:
             min_topic_size = st.slider('Minimum topic size', key='min_topic_size', min_value=2,
-                                       max_value=int(len(data)/3), step=1, value=3,
+                                       max_value=round(len(data)/3), step=1, value=round(len(data)/25),
                                        help='The minimum size of the topic. Increasing this value will lead to a lower number of clusters/topics.')
         with cols[1]:
             n_gram_range = st.slider('N-gram range', key='n_gram_range', min_value=1,
-                                     max_value=4, step=1, value=(1, 3),
+                                     max_value=4, step=1, value=(1, 2),
                                      help='N-gram range for the topic model')
         with cols[2]:
             st.text('')
             st.text('')
             st.button('Reset Defaults', on_click=helpers.reset_default_topic_sliders, key='reset_topic_sliders',
-                      kwargs={'min_topic_size': 3, 'n_gram_range': (1, 3)})
+                      kwargs={'min_topic_size': round(len(data)/25), 'n_gram_range': (1, 2)})
 
         with st.spinner('Topic Modeling'):
             data, topic_model, topics = helpers.topic_modeling(
@@ -65,7 +70,7 @@ def main():
                 topic_model_vis_option = st.selectbox(
                     'Select Topic Modeling Visualization', mapping.keys())
             try:
-                fig = mapping[topic_model_vis_option]()
+                fig = mapping[topic_model_vis_option](top_n_topics=10)
                 fig.update_layout(title='')
                 st.plotly_chart(fig, use_container_width=True)
             except:
@@ -146,10 +151,12 @@ def main():
         # Calculate centrality
         centrality = centrality_mapping[centrality_option](nx_net)
 
-        with st.spinner('Network Centrality Calculation'):
-            fig = helpers.network_centrality(
-                data, centrality, centrality_option)
-            st.plotly_chart(fig, use_container_width=True)
+        cols = st.columns([1, 10, 1])
+        with cols[1]:
+            with st.spinner('Network Centrality Calculation'):
+                fig = helpers.network_centrality(
+                    data, centrality, centrality_option)
+                st.plotly_chart(fig, use_container_width=True)
 
     st.markdown(
         """

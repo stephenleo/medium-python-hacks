@@ -8,6 +8,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
 import numpy as np
 import networkx as nx
+import textwrap
 
 
 def reset_default_topic_sliders(min_topic_size, n_gram_range):
@@ -28,10 +29,6 @@ def load_sbert_model():
 def load_data(uploaded_file):
     data = pd.read_csv(uploaded_file)
 
-    data = data[['Title', 'Abstract']]
-    data = data.dropna()
-    data = data.reset_index(drop=True)
-
     return data
 
 
@@ -47,14 +44,17 @@ def topic_modeling(data, min_topic_size, n_gram_range):
     )
 
     # For 'allenai-specter'
-    data['Title + Abstract'] = data['Title'] + '[SEP]' + data['Abstract']
+    data['Text'] = data[data.columns[0]]
+    for column in data.columns[1:]:
+        data['Text'] = data['Text'] + '[SEP]' + data[column].astype(str)
 
     # Train the topic model
     data["Topic"], data["Probs"] = topic_model.fit_transform(
-        data['Title + Abstract'])
+        data['Text'])
 
     # Merge topic results
     topic_df = topic_model.get_topic_info()[['Topic', 'Name']]
+    topic_df.columns = ['Topic', 'Topic_Name']
     data = data.merge(topic_df, on='Topic', how='left')
 
     # Topics
@@ -66,7 +66,7 @@ def topic_modeling(data, min_topic_size, n_gram_range):
 @st.cache(allow_output_mutation=True)
 def embeddings(data):
     data['embedding'] = load_sbert_model().encode(
-        data['Title + Abstract']).tolist()
+        data['Text']).tolist()
 
     return data
 
@@ -135,7 +135,7 @@ def network_plot(data, topics, neighbors):
             {
                 'group': row.Topic,
                 'label': row.Index,
-                'title': row.Title,
+                'title': row.Text,
                 'size': 20, 'font': {'size': 20, 'color': 'white'}
             }
         )
@@ -152,7 +152,7 @@ def network_plot(data, topics, neighbors):
         (
             len(data)+idx,
             {
-                'group': key, 'label': ', '.join(value['Name'].split('_')[1:]),
+                'group': key, 'label': ', '.join(value['Topic_Name'].split('_')[1:]),
                 'size': 30, 'physics': False, 'x': x, 'y': f'{y + idx*step}px',
                 # , 'fixed': True,
                 'shape': 'box', 'widthConstraint': 1000, 'font': {'size': 40, 'color': 'black'}
@@ -172,6 +172,14 @@ def network_plot(data, topics, neighbors):
     return nx_net, pyvis_net
 
 
+def text_processing(text):
+    text = text.split('[SEP]')
+    text = '<br><br>'.join(text)
+    text = '<br>'.join(textwrap.wrap(text, width=50))[:500]
+    text = text + '...'
+    return text
+
+
 @st.cache()
 def network_centrality(data, centrality, centrality_option):
     """Calculates the centrality of the network
@@ -183,12 +191,21 @@ def network_centrality(data, centrality, centrality_option):
                                  'node', centrality_option]).set_index('node')
 
     joined_data = data.join(central_nodes)
+
     top_central_nodes = joined_data.sort_values(
         centrality_option, ascending=False).head(10)
 
+    # Prepare for plot
+    top_central_nodes = top_central_nodes.reset_index()
+    top_central_nodes['index'] = top_central_nodes['index'].astype(str)
+    top_central_nodes['Topic_Name'] = top_central_nodes['Topic_Name'].apply(
+        lambda x: ', '.join(x.split('_')[1:]))
+    top_central_nodes['Text'] = top_central_nodes['Text'].apply(
+        text_processing)
+
     # Plot the Top 10 Central nodes
-    fig = px.bar(top_central_nodes, x=centrality_option, y='Title')
-    fig.update_layout(yaxis={'categoryorder': 'total ascending'},
-                      font={'size': 15},
-                      height=800, width=800)
+    fig = px.bar(top_central_nodes, x=centrality_option, y='index',
+                 color='Topic_Name', hover_data=['Text'], orientation='h')
+    fig.update_layout(yaxis={'categoryorder': 'total ascending', 'visible': False, 'showticklabels': False},
+                      font={'size': 15}, height=800)
     return fig
