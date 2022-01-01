@@ -101,6 +101,13 @@ def calc_max_connections(num_papers, ratio):
 
 
 @st.cache()
+def calc_neighbors(cosine_sim_matrix, threshold):
+    neighbors = np.argwhere(cosine_sim_matrix >= threshold).tolist()
+
+    return neighbors, len(neighbors)
+
+
+@st.cache()
 def calc_optimal_threshold(cosine_sim_matrix, max_connections):
     """Calculates the optimal threshold for the cosine similarity matrix.
     Allows a max of max_connections
@@ -108,19 +115,11 @@ def calc_optimal_threshold(cosine_sim_matrix, max_connections):
     logger.info('Calculating optimal threshold')
     thresh_sweep = np.arange(0.05, 1.05, 0.05)[::-1]
     for idx, threshold in enumerate(thresh_sweep):
-        neighbors = np.argwhere(cosine_sim_matrix >= threshold).tolist()
-        if len(neighbors) > max_connections:
+        _, num_neighbors = calc_neighbors(cosine_sim_matrix, threshold)
+        if num_neighbors > max_connections:
             break
 
     return round(thresh_sweep[idx-1], 2).item(), round(thresh_sweep[idx], 2).item()
-
-
-@st.cache()
-def calc_neighbors(cosine_sim_matrix, threshold):
-    logger.info('Calculating neighbors')
-    neighbors = np.argwhere(cosine_sim_matrix >= threshold).tolist()
-
-    return neighbors, len(neighbors)
 
 
 def nx_hash_func(nx_net):
