@@ -11,6 +11,13 @@ import networkx as nx
 import textwrap
 import logging
 
+from streamlit.report_thread import REPORT_CONTEXT_ATTR_NAME
+from threading import current_thread
+from contextlib import contextmanager
+from io import StringIO
+import sys
+import time
+
 logger = logging.getLogger('main')
 
 
@@ -69,6 +76,8 @@ def topic_modeling(data, min_topic_size, n_gram_range):
     # Topics
     # Optimization: Only take top 10 largest topics
     topics = topic_df.head(10).set_index('Topic').to_dict(orient='index')
+
+    logger.info('Topic Modeling Complete')
 
     return topic_data, topic_model, topics
 
@@ -219,3 +228,44 @@ def network_centrality(topic_data, centrality, centrality_option):
     fig.update_layout(yaxis={'categoryorder': 'total ascending', 'visible': False, 'showticklabels': False},
                       font={'size': 15}, height=800)
     return fig
+
+
+# Progress bar printer
+# https://github.com/BugzTheBunny/streamlit_logging_output_example/blob/main/app.py
+# https://discuss.streamlit.io/t/cannot-print-the-terminal-output-in-streamlit/6602/34
+@contextmanager
+def st_redirect(src, dst):
+    placeholder = st.empty()
+    output_func = getattr(placeholder, dst)
+
+    with StringIO() as buffer:
+        old_write = src.write
+
+        def new_write(b):
+            if getattr(current_thread(), REPORT_CONTEXT_ATTR_NAME, None):
+                buffer.write(b)
+                time.sleep(1)
+                buffer.seek(0)  # returns pointer to 0 position
+                output_func(b)
+            else:
+                old_write(b)
+
+        try:
+            src.write = new_write
+            yield
+        finally:
+            src.write = old_write
+
+
+@contextmanager
+def st_stdout(dst):
+    "this will show the prints"
+    with st_redirect(sys.stdout, dst):
+        yield
+
+
+@contextmanager
+def st_stderr(dst):
+    "This will show the logging"
+    with st_redirect(sys.stderr, dst):
+        yield

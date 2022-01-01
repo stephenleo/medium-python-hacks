@@ -35,8 +35,13 @@ def main():
         df = helpers.load_data('data.csv')
 
     data = df.copy()
-    selected_cols = st.multiselect('Select columns to analyse', options=data.columns,
+    st.subheader('Select columns to analyze')
+    selected_cols = st.multiselect(label='Select one or more columns. All the selected columns are concatenated before analyzing', options=data.columns,
                                    default=[col for col in data.columns if col.lower() in ['title', 'abstract']])
+
+    if not selected_cols:
+        st.error('No columns selected! Please select some text columns to analyze')
+
     data = data[selected_cols]
     data = data.dropna()
     data = data.reset_index(drop=True)
@@ -75,8 +80,9 @@ def main():
                       kwargs={'min_topic_size': min(round(len(data)/25), 10), 'n_gram_range': (1, 2)})
 
         with st.spinner('Topic Modeling'):
-            topic_data, topic_model, topics = helpers.topic_modeling(
-                data, min_topic_size=min_topic_size, n_gram_range=n_gram_range)
+            with helpers.st_stdout("success"), helpers.st_stderr("code"):
+                topic_data, topic_model, topics = helpers.topic_modeling(
+                    data, min_topic_size=min_topic_size, n_gram_range=n_gram_range)
 
             mapping = {
                 'Topic Keywords': topic_model.visualize_barchart,
