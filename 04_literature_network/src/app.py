@@ -59,7 +59,7 @@ def main():
         cols = st.columns(3)
         with cols[0]:
             min_topic_size = st.slider('Minimum topic size', key='min_topic_size', min_value=2,
-                                       max_value=round(len(data)*0.25), step=1, value=min(round(len(data)/25), 10),
+                                       max_value=min(round(len(data)*0.25), 100), step=1, value=min(round(len(data)/25), 10),
                                        help='The minimum size of the topic. Increasing this value will lead to a lower number of clusters/topics.')
         with cols[1]:
             n_gram_range = st.slider('N-gram range', key='n_gram_range', min_value=1,
