@@ -33,7 +33,12 @@ def main():
     st.write('First 5 rows of loaded data:')
     st.write(data[selected_cols].head())
 
-    if data is not None:
+    if (data is not None) and selected_cols:
+        # For 'allenai-specter'
+        data['Text'] = data[data.columns[0]]
+        for column in data.columns[1:]:
+            data['Text'] = data['Text'] + '[SEP]' + data[column].astype(str)
+
         ##########
         # Topic modeling
         ##########
@@ -42,20 +47,20 @@ def main():
         cols = st.columns(3)
         with cols[0]:
             min_topic_size = st.slider('Minimum topic size', key='min_topic_size', min_value=2,
-                                       max_value=round(len(data)/3), step=1, value=round(len(data)/25),
+                                       max_value=round(len(data)*0.25), step=1, value=min(round(len(data)/25), 10),
                                        help='The minimum size of the topic. Increasing this value will lead to a lower number of clusters/topics.')
         with cols[1]:
             n_gram_range = st.slider('N-gram range', key='n_gram_range', min_value=1,
-                                     max_value=4, step=1, value=(1, 2),
+                                     max_value=3, step=1, value=(1, 2),
                                      help='N-gram range for the topic model')
         with cols[2]:
             st.text('')
             st.text('')
             st.button('Reset Defaults', on_click=helpers.reset_default_topic_sliders, key='reset_topic_sliders',
-                      kwargs={'min_topic_size': round(len(data)/25), 'n_gram_range': (1, 2)})
+                      kwargs={'min_topic_size': min(round(len(data)/25), 10), 'n_gram_range': (1, 2)})
 
         with st.spinner('Topic Modeling'):
-            data, topic_model, topics = helpers.topic_modeling(
+            topic_data, topic_model, topics = helpers.topic_modeling(
                 data, min_topic_size=min_topic_size, n_gram_range=n_gram_range)
 
             mapping = {
@@ -82,16 +87,15 @@ def main():
         ##########
         st.header('🚀 STriP Network')
 
-        with st.spinner('Embedding generation'):
-            data = helpers.embeddings(data)
-
         with st.spinner('Cosine Similarity Calculation'):
             cosine_sim_matrix = helpers.cosine_sim(data)
 
-        min_value, value = helpers.calc_optimal_threshold(
+        value, min_value = helpers.calc_optimal_threshold(
             cosine_sim_matrix,
             # 25% is a good value for the number of papers
-            max_connections=helpers.calc_max_connections(len(data), 0.25)
+            max_connections=min(
+                helpers.calc_max_connections(len(data), 0.25), 5_000
+            )
         )
 
         cols = st.columns(3)
@@ -112,7 +116,7 @@ def main():
 
         with st.spinner('Network Generation'):
             nx_net, pyvis_net = helpers.network_plot(
-                data, topics, neighbors)
+                topic_data, topics, neighbors)
 
             # Save and read graph as HTML file (on Streamlit Sharing)
             try:
@@ -155,7 +159,7 @@ def main():
         with cols[1]:
             with st.spinner('Network Centrality Calculation'):
                 fig = helpers.network_centrality(
-                    data, centrality, centrality_option)
+                    topic_data, centrality, centrality_option)
                 st.plotly_chart(fig, use_container_width=True)
 
     st.markdown(
@@ -175,3 +179,13 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# Optimizations
+# Pareto: Embedding Generation, Topic Modeling, Network Generation, Plotting
+# 1. Generate embeddings exactly once - BERTopic generated embedding internally if not specified. Replace this with an external generated embeddings so it can be reused for Semantic Clustering
+# 2. Generate topic model exactly once - Streamlit cache. Dynamic heuristically tuned hyperparameters
+# 3. Generate network exactly once - Streamlit cache with custom hash funcs
+# 4. Tune the threshold dynamically until the number of connections is within a certain range
+# 5. Remove isolated nodes
+# 6. Prune the legend to only top 10 topics
