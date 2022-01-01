@@ -40,7 +40,10 @@ def main():
     data = data[selected_cols]
     data = data.dropna()
     data = data.reset_index(drop=True)
-    st.write(f'Number of papers: {len(data)}')
+    st.write(f'Number of rows: {len(data)}')
+    if len(data) > 200:
+        data = data.iloc[:200]
+        st.write(f'Only first 200 rows will be analyzed')
     st.write('First 5 rows of loaded data:')
     st.write(data[selected_cols].head())
 
