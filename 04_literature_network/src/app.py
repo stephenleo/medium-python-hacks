@@ -2,10 +2,20 @@ import networkx as nx
 from streamlit.components.v1 import html
 import streamlit as st
 import helpers
+import logging
+
+# Setup Basic Configuration
 st.set_page_config(layout='wide',
                    page_title='STriP: Semantic Similarity of Scientific Papers!',
                    page_icon='💡'
                    )
+
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s: %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
+
+logger = logging.getLogger('main')
 
 
 def main():
@@ -18,6 +28,7 @@ def main():
     ##########
     # Load data
     ##########
+    logger.info('========== Step1: Loading data ==========')
     if uploaded_file is not None:
         df = helpers.load_data(uploaded_file)
     else:
@@ -42,6 +53,7 @@ def main():
         ##########
         # Topic modeling
         ##########
+        logger.info('========== Step2: Topic modeling ==========')
         st.header('🔥 Topic Modeling')
 
         cols = st.columns(3)
@@ -85,6 +97,7 @@ def main():
         ##########
         # STriP Network
         ##########
+        logger.info('========== Step3: STriP Network ==========')
         st.header('🚀 STriP Network')
 
         with st.spinner('Cosine Similarity Calculation'):
@@ -138,6 +151,7 @@ def main():
         ##########
         # Centrality
         ##########
+        logger.info('========== Step4: Network Centrality ==========')
         st.header('🏅 Most Important Papers')
 
         centrality_mapping = {

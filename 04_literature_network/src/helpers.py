@@ -9,6 +9,9 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 import textwrap
+import logging
+
+logger = logging.getLogger('main')
 
 
 def reset_default_topic_sliders(min_topic_size, n_gram_range):
@@ -29,11 +32,13 @@ def load_data(uploaded_file):
 
 @st.cache()
 def embedding_gen(data):
+    logger.info('Calculating Embeddings')
     return SentenceTransformer('allenai-specter').encode(data['Text'])
 
 
 @st.cache()
 def load_bertopic_model(min_topic_size, n_gram_range):
+    logger.info('Loading BERTopic model')
     return BERTopic(
         vectorizer_model=CountVectorizer(
             stop_words='english', ngram_range=n_gram_range
@@ -47,6 +52,7 @@ def load_bertopic_model(min_topic_size, n_gram_range):
 def topic_modeling(data, min_topic_size, n_gram_range):
     """Topic modeling using BERTopic
     """
+    logger.info('Calculating Topic Model')
     topic_model = load_bertopic_model(min_topic_size, n_gram_range)
 
     # Train the topic model
@@ -69,6 +75,7 @@ def topic_modeling(data, min_topic_size, n_gram_range):
 
 @st.cache()
 def cosine_sim(data):
+    logger.info('Cosine similarity')
     cosine_sim_matrix = cosine_similarity(embedding_gen(data))
 
     # Take only upper triangular matrix
@@ -89,6 +96,7 @@ def calc_optimal_threshold(cosine_sim_matrix, max_connections):
     """Calculates the optimal threshold for the cosine similarity matrix.
     Allows a max of max_connections
     """
+    logger.info('Calculating optimal threshold')
     thresh_sweep = np.arange(0.05, 1.05, 0.05)[::-1]
     for idx, threshold in enumerate(thresh_sweep):
         neighbors = np.argwhere(cosine_sim_matrix >= threshold).tolist()
@@ -100,6 +108,7 @@ def calc_optimal_threshold(cosine_sim_matrix, max_connections):
 
 @st.cache()
 def calc_neighbors(cosine_sim_matrix, threshold):
+    logger.info('Calculating neighbors')
     neighbors = np.argwhere(cosine_sim_matrix >= threshold).tolist()
 
     return neighbors, len(neighbors)
@@ -121,6 +130,7 @@ def pyvis_hash_func(pyvis_net):
 def network_plot(topic_data, topics, neighbors):
     """Creates a network plot of connected papers. Colored by Topic Model topics.
     """
+    logger.info('Calculating Network Plot')
     nx_net = nx.Graph()
     pyvis_net = Network(height='750px', width='100%', bgcolor='#222222')
 
@@ -183,6 +193,7 @@ def text_processing(text):
 def network_centrality(topic_data, centrality, centrality_option):
     """Calculates the centrality of the network
     """
+    logger.info('Calculating Network Centrality')
     # Sort Top 10 Central nodes
     central_nodes = sorted(
         centrality.items(), key=lambda item: item[1], reverse=True)
