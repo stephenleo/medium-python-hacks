@@ -204,6 +204,8 @@ def about_me():
         """
         💡🔥🚀 STriP v1.0 🚀🔥💡
 
+        If you like this work, please consider ❤️ this HugginFace Space and ⭐ this Github repo [Link](https://github.com/stephenleo/stripnet)
+
         👨‍🔬 Author: Marie Stephen Leo
 
         👔 Linkedin: [Marie Stephen Leo](https://www.linkedin.com/in/marie-stephen-leo/)
