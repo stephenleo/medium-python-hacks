@@ -44,13 +44,14 @@ def load_data():
 
     # Minor cleanup
     data = data.dropna()
-    data = data.reset_index(drop=True)
 
     # Load max 200 rows only
     st.write(f'Number of rows: {len(data)}')
-    if len(data) > 200:
-        data = data.iloc[:200]
-        st.write(f'Only first 200 rows will be analyzed')
+    if len(data) > 500:
+        data = data.sample(500, random_state=0)
+        st.write(f'Only random 500 rows will be analyzed')
+
+    data = data.reset_index(drop=True)
 
     # Prints
     st.write('First 5 rows of loaded data:')
@@ -176,10 +177,10 @@ def network_centrality(nx_net, topic_data):
     st.header('🏅 Most Important Papers')
 
     centrality_mapping = {
+        'Betweenness Centrality': nx.betweenness_centrality,
         'Closeness Centrality': nx.closeness_centrality,
         'Degree Centrality': nx.degree_centrality,
         'Eigenvector Centrality': nx.eigenvector_centrality,
-        'Betweenness Centrality': nx.betweenness_centrality,
     }
 
     cols = st.columns(3)
